@@ -39,13 +39,18 @@ with DAG(
     max_active_runs=3,
     ) as dag:    
 
+    dummy1 = DummyOperator(task_id="start")
+    dummy2 = DummyOperator(task_id="finished")
+
     t1 = PythonOperator(
-        task_id="pull_raw",
-        python_callable=eval("pull_influx"),
-        op_kwargs={'brand_name':i},
+        task_id="pull_raw_data",
+        python_callable=eval("pull_raw_data"),
+        # op_kwargs={'brand_name':i},
         # depends_on_past=True,
         depends_on_past=False,
         owner="coops2",
-        retries=3,
+        retries=0,
         retry_delay=timedelta(minutes=1),
     )
+
+    dummy1 >> t1 >> dummy2
