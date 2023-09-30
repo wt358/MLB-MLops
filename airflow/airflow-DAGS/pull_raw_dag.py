@@ -39,11 +39,10 @@ def pull_raw_data():
         collection_box=db_raw[f'{home_name}']
         # collection_box.create_index([("gameId",TEXT)],unique=True)
         try:
-            result = collection_box.insert_many(dict,ordered=False)
+            result = collection_box.insert_one(dict)
         except Exception as e:
             print("error occured during push",e)
         client.close()
-        break
     print("hello pull raw")
 
 with DAG(
