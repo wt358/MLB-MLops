@@ -26,7 +26,7 @@ import statsapi
 
 
 def pull_raw_data():
-    games = statsapi.schedule(start_date='07/01/2018',end_date='07/31/2018')
+    games = statsapi.schedule(start_date='07/01/2018',end_date='07/11/2018')
     for x in games:
         print(x['game_id'])
         dict=statsapi.boxscore_data(x['game_id'])
