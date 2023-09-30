@@ -42,6 +42,7 @@ def pull_raw_data():
             result = collection_box.insert_many(dict,ordered=False)
         except Exception as e:
             print("error occured during push",e)
+        client.close()
         break
     print("hello pull raw")
 
