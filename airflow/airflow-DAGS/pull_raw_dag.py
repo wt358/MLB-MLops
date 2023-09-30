@@ -26,9 +26,24 @@ import statsapi
 
 
 def pull_raw_data():
-
+    games = statsapi.schedule(start_date='07/01/2018',end_date='07/31/2018')
+    for x in games:
+        # print(x['game_id'])
+        dict=statsapi.boxscore_data(x['game_id'])
+        home_name=x['home_name']
+        # print(dict)
+        # print(home_name)
+        host = "mongodb-0.mongodb-headless.mongo.svc.cluster.local:27017"
+        client = MongoClient(host)
+        db_raw=client['box_score_raw']
+        collection_box=db_raw[f'{home_name}']
+        collection_box.create_index(["gameId",ASCENDING],unique=True)
+        try:
+            result = collection_box.insert_many(x,ordered=False)
+        except Exception as e:
+            print(e)
+        break
     print("hello pull raw")
-
 
 with DAG(
     dag_id="pull_raw_dag", # DAG의 식별자용 아이디입니다.
