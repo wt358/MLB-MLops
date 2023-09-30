@@ -33,7 +33,7 @@ def pull_raw_data():
         home_name=x['home_name']
         print(dict)
         print(home_name)
-        host = "mongodb://root:coops2022@mongodb-0.mongodb-headless.mongo.svc.cluster.local:27017"
+        host = "mongodb://root:coops2022@mongodb-0.mongodb-headless.mongo.svc.cluster.local:27017, mongodb-1.mongodb-headless.mongo.svc.cluster.local:27017"
         client = MongoClient(host)
         db_raw=client['boxscore_raw']
         collection_box=db_raw[f'{home_name}']
