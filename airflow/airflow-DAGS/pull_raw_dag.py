@@ -55,7 +55,7 @@ with DAG(
     ) as dag:    
 
     dummy1 = DummyOperator(task_id="start")
-    dummy2 = DummyOperator(task_id="finished")
+    dummy2 = DummyOperator(task_id="pull finished")
 
     t1 = PythonOperator(
         task_id="pull_raw_data",
@@ -67,5 +67,6 @@ with DAG(
         retries=0,
         retry_delay=timedelta(minutes=1),
     )
-
-    dummy1 >> t1 >> dummy2
+    dummy3 = DummyOperator(task_id="ETL task")
+    dummy4 = DummyOperator(task_id="ETL finished")
+    dummy1 >> t1 >> dummy2 >> dummy3 >> dummy4
