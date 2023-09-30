@@ -37,7 +37,7 @@ def pull_raw_data():
         client = MongoClient(host)
         db_raw=client['boxscore_raw']
         collection_box=db_raw[f'{home_name}']
-        collection_box.create_index([("gameId",TEXT)],unique=True)
+        # collection_box.create_index([("gameId",TEXT)],unique=True)
         try:
             result = collection_box.insert_many(dict,ordered=False)
         except Exception as e:
