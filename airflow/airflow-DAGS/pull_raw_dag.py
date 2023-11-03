@@ -45,6 +45,83 @@ def pull_raw_data():
         client.close()
     print("hello pull raw")
 
+def df_mov_avg():
+    import matplotlib.pyplot as plt
+    host = "mongodb://root:coops2022@mongodb-0.mongodb-headless.mongo.svc.cluster.local:27017, mongodb-1.mongodb-headless.mongo.svc.cluster.local:27017"
+    client=MongoClient(host)
+    db_raw=client['box_score']
+    db_att_y=client['mov_avg_attack_y']
+    db_def_y=client['mov_avg_defend_y']
+    col_list=db_raw.list_collection_names()
+    for coll in col_list:
+        print(coll)
+        try:
+            raw_data=list(db_raw[coll].find().sort("game_date",1))
+        except Exception as e:
+            print(e)
+        raw_df=pd.DataFrame(raw_data).drop(columns=['_id'])
+
+        print(raw_df)
+        # print(raw_df[['game_date','game_id','spID']].shift())
+        # raw_df['game_id'].plot()
+        # plt.show()
+        mov_avg_df=raw_df.drop(columns=['game_id','spID'])
+        mov_avg_att=mov_avg_df.drop([col for col in raw_df.columns if '_p' in col],axis=1)
+        mov_avg_att=mov_avg_att.rolling(5).mean()
+        mov_avg_att['game_date']=raw_df['game_date']
+        mov_avg_att['game_date']=mov_avg_att['game_date'].shift(-1)
+        mov_avg_join=pd.merge(left=mov_avg_att,right=raw_df[['game_date','game_id','spID','runs']],how='inner',on='game_date').dropna()
+        print(mov_avg_join)
+
+        db_att_y[coll].create_index([("game_id",ASCENDING)],unique=True)
+        db_def_y[coll].create_index([("game_id",ASCENDING)],unique=True)
+        try:
+            db_att_y[coll].insert_many(mov_avg_join.to_dict('records'),ordered=False)
+        except Exception as e:
+            print(e)
+        print("defend")
+        mov_avg_def=mov_avg_df.drop([col for col in mov_avg_df.columns if '_p' not in col],axis=1)
+        mov_avg_def['spID']=raw_df['spID']
+        list_sp=mov_avg_def['spID'].unique()
+        dfs_gropuby_spID=mov_avg_def.groupby(by=['spID'])
+        for sp in list_sp:
+            temp_df=dfs_gropuby_spID.get_group(sp).rolling(5).mean()
+            temp_df['game_date']=raw_df['game_date']
+            temp_df['game_date']=temp_df['game_date'].shift(-1)
+            
+            # print(temp_df)
+            mov_avg_def_join=pd.merge(left=temp_df,right=raw_df[['game_date','game_id','runs_p']],how='inner',on='game_date').dropna()
+            print(mov_avg_def_join)
+            try:
+                db_def_y[coll].insert_many(mov_avg_def_join.to_dict('records'),ordered=False)
+            except Exception as e:
+                print(e)
+
+        mov_avg_df=raw_df.drop(columns=['game_id','spID'])
+        mov_avg_def=mov_avg_df.drop([col for col in mov_avg_df.columns if '_p' not in col],axis=1)
+        mov_avg_def=mov_avg_def.rolling(5).mean()
+        mov_avg_def['game_date']=raw_df['game_date']
+        mov_avg_def['game_date']=mov_avg_def['game_date'].shift(-1)
+        mov_avg_join=pd.merge(left=mov_avg_def,right=raw_df[['game_date','game_id','spID','runs_p']],how='inner',on='game_date').dropna()
+        print(mov_avg_join)   
+        try:
+            db_def_y[coll].insert_many(mov_avg_join.to_dict('records'),ordered=False)
+        except Exception as e:
+            print(e)
+        # mov_avg_def_df=mov_avg_def.groupby(by=['spID']).rolling(5).mean()
+        # # mov_avg_def_df.set_index('game')
+        # print(mov_avg_def_df)
+        # mov_avg_def_df=mov_avg_def_df.reset_index().set_index('level_1')
+        # mov_avg_def_df['game_date']=raw_df['game_date']
+        # print(mov_avg_def_df)
+        # mov_avg_def_df['game_date']=mov_avg_def_df['game_date'].shift(-1)
+        # print(mov_avg_def_df)
+        # mov_avg_def_df.to_csv('groupby.csv')
+        # mov_avg_def_join=pd.merge(left=mov_avg_def_df,right=raw_df[['game_date','game_id','spID']],how='inner',on='game_date')
+    client.close()
+    print("hello mov avg")
+
+
 with DAG(
     dag_id="pull_raw_dag", # DAG의 식별자용 아이디입니다.
     description="pull raw data from local DBs", # DAG에 대해 설명합니다.
@@ -67,6 +144,16 @@ with DAG(
         retries=0,
         retry_delay=timedelta(minutes=1),
     )
+    t2 = PythonOperator(
+        task_id="ETL_data",
+        python_callable=eval("df_mov_avg"),
+        # op_kwargs={'brand_name':i},
+        # depends_on_past=True,
+        depends_on_past=False,
+        owner="coops2",
+        retries=0,
+        retry_delay=timedelta(minutes=1),
+    )
     dummy3 = DummyOperator(task_id="ETL_task")
     dummy4 = DummyOperator(task_id="ETL_finished")
-    dummy1 >> t1 >> dummy2 >> dummy3 >> dummy4
+    dummy1 >> t1 >> dummy2 >> t2 >> dummy4
