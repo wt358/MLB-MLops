@@ -1,159 +1,91 @@
-from datetime import timedelta
-from datetime import datetime
-from airflow import DAG
-from airflow.utils.dates import days_ago
-from airflow.operators.bash import BashOperator
-from airflow.operators.python import PythonOperator
-from airflow.operators.dummy import DummyOperator
+from datetime import datetime, timedelta
+
+from kubernetes.client import models as k8s
+from airflow.models import DAG
 from airflow.models.variable import Variable
+
+from airflow.operators.dummy_operator import DummyOperator
+from airflow.operators.python_operator import BranchPythonOperator
+from airflow.kubernetes.secret import Secret
+from airflow.kubernetes.pod import Resources
+from airflow.providers.cncf.kubernetes.operators.kubernetes_pod import KubernetesPodOperator
+from airflow.utils.dates import days_ago
 from airflow.utils.trigger_rule import TriggerRule
 
-from sklearn.preprocessing import StandardScaler
 
-import influxdb_client
-import csv
-from pymongo import MongoClient, ASCENDING, DESCENDING, TEXT
-import pandas as pd
-import os
+gpu_tag='0.22'
+tad_tag='0.01'
+vpn_tag='0.08'
 
-import time
+dag_id = 'learning-dag'
 
-import sqlalchemy
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.sql import text
-import statsapi
+task_default_args = {
+        'owner': 'coops2',
+        'retries': 0,
+        'retry_delay': timedelta(minutes=1),
+        'depends_on_past': False,
+        #'execution_timeout': timedelta(minutes=5)
+}
 
-
-def pull_raw_data():
-    games = statsapi.schedule(start_date='07/01/2018',end_date='07/11/2018')
-    for x in games:
-        print(x['game_id'])
-        dict=statsapi.boxscore_data(x['game_id'])
-        home_name=x['home_name']
-        print(dict)
-        print(home_name)
-        host = "mongodb://root:coops2022@mongodb-0.mongodb-headless.mongo.svc.cluster.local:27017, mongodb-1.mongodb-headless.mongo.svc.cluster.local:27017"
-        client = MongoClient(host)
-        db_raw=client['boxscore_raw']
-        collection_box=db_raw[f'{home_name}']
-        # collection_box.create_index([("gameId",TEXT)],unique=True)
-        try:
-            result = collection_box.insert_one(dict)
-        except Exception as e:
-            print("error occured during push",e)
-        client.close()
-    print("hello pull raw")
-
-def df_mov_avg():
-    import matplotlib.pyplot as plt
-    host = "mongodb://root:coops2022@mongodb-0.mongodb-headless.mongo.svc.cluster.local:27017, mongodb-1.mongodb-headless.mongo.svc.cluster.local:27017"
-    client=MongoClient(host)
-    db_raw=client['box_score']
-    db_att_y=client['mov_avg_attack_y']
-    db_def_y=client['mov_avg_defend_y']
-    col_list=db_raw.list_collection_names()
-    for coll in col_list:
-        print(coll)
-        try:
-            raw_data=list(db_raw[coll].find().sort("game_date",1))
-        except Exception as e:
-            print(e)
-        raw_df=pd.DataFrame(raw_data).drop(columns=['_id'])
-
-        print(raw_df)
-        # print(raw_df[['game_date','game_id','spID']].shift())
-        # raw_df['game_id'].plot()
-        # plt.show()
-        mov_avg_df=raw_df.drop(columns=['game_id','spID'])
-        mov_avg_att=mov_avg_df.drop([col for col in raw_df.columns if '_p' in col],axis=1)
-        mov_avg_att=mov_avg_att.rolling(5).mean()
-        mov_avg_att['game_date']=raw_df['game_date']
-        mov_avg_att['game_date']=mov_avg_att['game_date'].shift(-1)
-        mov_avg_join=pd.merge(left=mov_avg_att,right=raw_df[['game_date','game_id','spID','runs']],how='inner',on='game_date').dropna()
-        print(mov_avg_join)
-
-        db_att_y[coll].create_index([("game_id",ASCENDING)],unique=True)
-        db_def_y[coll].create_index([("game_id",ASCENDING)],unique=True)
-        try:
-            db_att_y[coll].insert_many(mov_avg_join.to_dict('records'),ordered=False)
-        except Exception as e:
-            print(e)
-        print("defend")
-        mov_avg_def=mov_avg_df.drop([col for col in mov_avg_df.columns if '_p' not in col],axis=1)
-        mov_avg_def['spID']=raw_df['spID']
-        list_sp=mov_avg_def['spID'].unique()
-        dfs_gropuby_spID=mov_avg_def.groupby(by=['spID'])
-        for sp in list_sp:
-            temp_df=dfs_gropuby_spID.get_group(sp).rolling(5).mean()
-            temp_df['game_date']=raw_df['game_date']
-            temp_df['game_date']=temp_df['game_date'].shift(-1)
-            
-            # print(temp_df)
-            mov_avg_def_join=pd.merge(left=temp_df,right=raw_df[['game_date','game_id','runs_p']],how='inner',on='game_date').dropna()
-            print(mov_avg_def_join)
-            try:
-                db_def_y[coll].insert_many(mov_avg_def_join.to_dict('records'),ordered=False)
-            except Exception as e:
-                print(e)
-
-        mov_avg_df=raw_df.drop(columns=['game_id','spID'])
-        mov_avg_def=mov_avg_df.drop([col for col in mov_avg_df.columns if '_p' not in col],axis=1)
-        mov_avg_def=mov_avg_def.rolling(5).mean()
-        mov_avg_def['game_date']=raw_df['game_date']
-        mov_avg_def['game_date']=mov_avg_def['game_date'].shift(-1)
-        mov_avg_join=pd.merge(left=mov_avg_def,right=raw_df[['game_date','game_id','spID','runs_p']],how='inner',on='game_date').dropna()
-        print(mov_avg_join)   
-        try:
-            db_def_y[coll].insert_many(mov_avg_join.to_dict('records'),ordered=False)
-        except Exception as e:
-            print(e)
-        # mov_avg_def_df=mov_avg_def.groupby(by=['spID']).rolling(5).mean()
-        # # mov_avg_def_df.set_index('game')
-        # print(mov_avg_def_df)
-        # mov_avg_def_df=mov_avg_def_df.reset_index().set_index('level_1')
-        # mov_avg_def_df['game_date']=raw_df['game_date']
-        # print(mov_avg_def_df)
-        # mov_avg_def_df['game_date']=mov_avg_def_df['game_date'].shift(-1)
-        # print(mov_avg_def_df)
-        # mov_avg_def_df.to_csv('groupby.csv')
-        # mov_avg_def_join=pd.merge(left=mov_avg_def_df,right=raw_df[['game_date','game_id','spID']],how='inner',on='game_date')
-    client.close()
-    print("hello mov avg")
+dag = DAG(
+        dag_id=dag_id,
+        description='kubernetes pod operator',
+        start_date=days_ago(1),
+        default_args=task_default_args,
+        schedule_interval=timedelta(days=7),
+        max_active_runs=3,
+        catchup=True,
+        # catchup=False,
+)
 
 
-with DAG(
-    dag_id="pull_raw_dag", # DAG의 식별자용 아이디입니다.
-    description="pull raw data from local DBs", # DAG에 대해 설명합니다.
-    start_date=days_ago(2), # DAG 정의 기준 2일 전부터 시작합니다.
-    schedule_interval=timedelta(days=1), # 매일 00:00에 실행합니다.
-    tags=["my_dags"],
-    max_active_runs=3,
-    ) as dag:    
+configmaps = [
+        k8s.V1EnvFromSource(config_map_ref=k8s.V1ConfigMapEnvSource(name='airflow-cluster-pod-template'))
+        ]
 
-    dummy1 = DummyOperator(task_id="start")
-    dummy2 = DummyOperator(task_id="pull_finished")
+# secret_all = Secret('env', None, 'db-secret-hk8b2hk77m')
+secret_all1 = Secret('env', None, 'airflow-cluster-config-envs')
+secret_all2 = Secret('env', None, 'airflow-cluster-db-migrations')
+secret_all3 = Secret('env', None, 'airflow-cluster-pgbouncer')
+secret_all4 = Secret('env', None, 'airflow-cluster-pgbouncer-certs')
+secret_all5 = Secret('env', None, 'airflow-cluster-postgresql')
+secret_all6 = Secret('env', None, 'airflow-cluster-sync-users')
+secret_all7 = Secret('env', None, 'airflow-cluster-token-7wptr')
+secret_all8 = Secret('env', None, 'airflow-cluster-webserver-config')
+secret_alla = Secret('env', None, 'airflow-ssh-git-secret')
+secret_allb = Secret('env', None, 'default-token-8d2dz')
 
-    t1 = PythonOperator(
-        task_id="pull_raw_data",
-        python_callable=eval("pull_raw_data"),
-        # op_kwargs={'brand_name':i},
-        # depends_on_past=True,
-        depends_on_past=False,
-        owner="coops2",
-        retries=0,
-        retry_delay=timedelta(minutes=1),
-    )
-    t2 = PythonOperator(
-        task_id="ETL_data",
-        python_callable=eval("df_mov_avg"),
-        # op_kwargs={'brand_name':i},
-        # depends_on_past=True,
-        depends_on_past=False,
-        owner="coops2",
-        retries=0,
-        retry_delay=timedelta(minutes=1),
-    )
-    dummy3 = DummyOperator(task_id="ETL_task")
-    dummy4 = DummyOperator(task_id="ETL_finished")
-    dummy1 >> t1 >> dummy2 >> t2 >> dummy4
+start = DummyOperator(task_id=f"start", dag=dag)
+
+run_score_model= KubernetesPodOperator(
+        task_id="score_model_pod_operator_",
+        name="score_model",
+        namespace='airflow-cluster',
+        image=f'wt358/cuda:{gpu_tag}',
+        image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
+        cmds=["sh" ],
+        arguments=["command.sh", "score_model"],
+        secrets=[secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb , secret_hyperpara],
+        is_delete_operator_pod=True,
+        get_logs=True,
+        startup_timeout_seconds=600,
+        retries=3,
+        )
+run_loss_model= KubernetesPodOperator(
+        task_id="loss_model_pod_operator_",
+        name="loss_model",
+        namespace='airflow-cluster',
+        image=f'wt358/cuda:{gpu_tag}',
+        image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
+        cmds=["sh" ],
+        arguments=["command.sh", "loss_model"],
+        secrets=[secret_all1 ,secret_all2 ,secret_all3, secret_all4, secret_all5, secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb , secret_hyperpara],
+        is_delete_operator_pod=True,
+        get_logs=True,
+        startup_timeout_seconds=600,
+        retries=3,
+        )
+
+after_ml = DummyOperator(task_id="ML_fin_"+j, dag=dag)
+
+start >> [run_score_model,run_loss_model] >>after_ml
