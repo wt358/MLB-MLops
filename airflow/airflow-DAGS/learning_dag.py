@@ -86,6 +86,6 @@ run_loss_model= KubernetesPodOperator(
         retries=3,
         )
 
-after_ml = DummyOperator(task_id="ML_fin_"+j, dag=dag)
+after_ml = DummyOperator(task_id="ML_fin_", dag=dag)
 
 start >> [run_score_model,run_loss_model] >>after_ml
