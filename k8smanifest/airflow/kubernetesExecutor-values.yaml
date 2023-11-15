@@ -98,9 +98,9 @@ airflow:
 
     ## resource requests/limits for the Pod template "base" container
     ## [SPEC] https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#resourcerequirements-v1-core
-    resources: {}
-    #    limits:
-    #        nvidia.com/gpu: 1
+    resources:
+        limits:
+            nvidia.com/gpu: 1
 
     ## extra pip packages to install in the Pod template
     ## [FAQ] https://github.com/airflow-helm/charts/blob/main/charts/airflow/docs/faq/configuration/extra-python-packages.md
@@ -122,7 +122,7 @@ airflow:
 ###################################
 scheduler:
   ## the number of scheduler Pods to run
-  replicas: 3
+  replicas: 1
 
   ## resource requests/limits for the scheduler Pods
   ## [SPEC] https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#resourcerequirements-v1-core
@@ -159,7 +159,7 @@ web:
 
   ## configs for the Service of the web Pods
   service:
-    type: ClusterIP
+    type: NodePort
     loadBalancerIP: default-my-nginx-4c862-15586822-f2c935bd41ee.kr.lb.naverncp.com
     externalPort: 443
 
@@ -186,9 +186,9 @@ web:
 workers:
   ## if the airflow workers StatefulSet should be deployed
   enabled: false
-  resources: {}
-  #limits:
-  #      nvidia.com/gpu: 1
+  resources:
+     limits:
+        nvidia.com/gpu: 1
 
 
 ###################################
