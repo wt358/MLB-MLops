@@ -32,7 +32,7 @@ from pymongo import MongoClient, ASCENDING, DESCENDING
 from json import loads
 import random as rn
 
-gpu_tag='0.19'
+gpu_tag='0.22'
 tad_tag='0.01'
 
 # manual parameters
