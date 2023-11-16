@@ -154,6 +154,6 @@ with DAG(
         retries=0,
         retry_delay=timedelta(minutes=1),
     )
-    dummy3 = DummyOperator(task_id="ETL_task")
+    # dummy3 = DummyOperator(task_id="ETL_task")
     dummy4 = DummyOperator(task_id="ETL_finished")
     dummy1 >> t1 >> dummy2 >> t2 >> dummy4
