@@ -32,8 +32,7 @@ from pymongo import MongoClient, ASCENDING, DESCENDING
 from json import loads
 import random as rn
 
-gpu_tag='0.22'
-tad_tag='0.01'
+gpu_tag='0.23'
 
 # manual parameters
 RANDOM_SEED = 42
@@ -73,7 +72,7 @@ with DAG(
     
     predict_winner = KubernetesPodOperator(
         task_id="predict_winner",
-        name="main-infer-lstm",
+        name="predict_winner",
         namespace='airflow',
         image=f'wt358/cuda:{gpu_tag}',
         # image_pull_policy="Always",
