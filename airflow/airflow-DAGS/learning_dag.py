@@ -60,7 +60,7 @@ start = DummyOperator(task_id=f"start", dag=dag)
 run_score_model= KubernetesPodOperator(
         task_id="score_model_pod_operator_",
         name="score_model",
-        namespace='airflow-cluster',
+        namespace='airflow',
         image=f'wt358/cuda:{gpu_tag}',
         image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
         cmds=["sh" ],
@@ -74,7 +74,7 @@ run_score_model= KubernetesPodOperator(
 run_loss_model= KubernetesPodOperator(
         task_id="loss_model_pod_operator_",
         name="loss_model",
-        namespace='airflow-cluster',
+        namespace='airflow',
         image=f'wt358/cuda:{gpu_tag}',
         image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
         cmds=["sh" ],

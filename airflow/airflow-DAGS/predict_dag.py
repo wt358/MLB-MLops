@@ -74,7 +74,7 @@ with DAG(
     predict_winner = KubernetesPodOperator(
         task_id="predict_winner",
         name="main-infer-lstm",
-        namespace='airflow-cluster',
+        namespace='airflow',
         image=f'wt358/cuda:{gpu_tag}',
         # image_pull_policy="Always",
         # image_pull_policy="IfNotPresent",
