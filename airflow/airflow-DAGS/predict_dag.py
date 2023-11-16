@@ -46,17 +46,17 @@ rn.seed(RANDOM_SEED)
 
 rn.seed(10)
 
-secret_all = Secret('env', None, 'db-secret-hk8b2hk77m')
+# secret_all = Secret('env', None, 'db-secret-hk8b2hk77m')
 secret_all1 = Secret('env', None, 'airflow-cluster-config-envs')
 secret_all2 = Secret('env', None, 'airflow-cluster-db-migrations')
 secret_all3 = Secret('env', None, 'airflow-cluster-pgbouncer')
 secret_all4 = Secret('env', None, 'airflow-cluster-pgbouncer-certs')
 secret_all5 = Secret('env', None, 'airflow-cluster-postgresql')
 secret_all6 = Secret('env', None, 'airflow-cluster-sync-users')
-secret_all7 = Secret('env', None, 'airflow-cluster-token-7wptr')
+# secret_all7 = Secret('env', None, 'airflow-cluster-token-7wptr')
 secret_all8 = Secret('env', None, 'airflow-cluster-webserver-config')
 secret_alla = Secret('env', None, 'airflow-ssh-git-secret')
-secret_allb = Secret('env', None, 'default-token-8d2dz')
+# secret_allb = Secret('env', None, 'default-token-8d2dz')
 
 # define DAG with 'with' phase
 with DAG(
@@ -81,8 +81,8 @@ with DAG(
         # image_pull_secrets=[k8s.V1LocalObjectReference('regcred')],
         cmds=["sh"],
         arguments=["command.sh", "predict_win"],
-        secrets=[ secret_all1, secret_all2, secret_all3, secret_all4, secret_all5,
-                secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb],
+        # secrets=[ secret_all1, secret_all2, secret_all3, secret_all4, secret_all5,
+        #         secret_all6, secret_all7, secret_all8,  secret_alla, secret_allb],
         is_delete_operator_pod=True,
         get_logs=True,
         startup_timeout_seconds=600,
