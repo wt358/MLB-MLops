@@ -300,9 +300,9 @@ def loss_model():
     print("learning loss model")
 
 def predict_win():
-    now=datetime.datetime.now()
+    now=datetime.now()
     today=str(now)[:10]
-    match_day=datetime.datetime.strptime(today,'%Y-%m-%d')
+    match_day=datetime.strptime(today,'%Y-%m-%d')
     host = "mongodb://localhost:27017/"
     client=MongoClient(host)
     print(match_day)
