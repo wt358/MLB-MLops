@@ -448,7 +448,7 @@ def predict_win():
 
 if __name__ == "__main__":
     print("entering main")
-    print(sys.argv[1])
+    print(sys.argv[0])
     if sys.argv[1] == 'score_model':
         print("entering score_model")
         score_model()
