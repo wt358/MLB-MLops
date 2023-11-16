@@ -13,7 +13,7 @@ from airflow.utils.dates import days_ago
 from airflow.utils.trigger_rule import TriggerRule
 
 
-gpu_tag='0.23'
+gpu_tag='0.24'
 
 dag_id = 'learning-dag'
 
