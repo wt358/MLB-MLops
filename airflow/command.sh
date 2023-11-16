@@ -1,7 +1,6 @@
 #!/bin/sh
 
-BRAND=$1
-FUNC=$2
+FUNC=$1
 
 git clone https://github.com/wt358/MLB-MLops.git
 mkdir py-test
