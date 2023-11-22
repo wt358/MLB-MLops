@@ -78,6 +78,7 @@ N_BATCH = 32
 N_DROPOUT = 0.2
 dict_code={'AZ':109, 'WSH':120, 'LAA' : 108 }
 host = "mongodb://root:coops2022@mongodb-0.mongodb-headless.mongo.svc.cluster.local:27017, mongodb-1.mongodb-headless.mongo.svc.cluster.local:27017"
+host = "mongodb://114.200.143.112:27017"
 
 def create_model(input):
     model = keras.Sequential()
@@ -304,7 +305,7 @@ def predict_win():
     # today=str(now)[:10]
     today="2023-10-01"
     match_day=datetime.strptime(today,'%Y-%m-%d')
-    host = "mongodb://localhost:27017/"
+    host = "mongodb://114.200.143.112:27017/"
     client=MongoClient(host)
     print(match_day)
     db_model = client['model']
