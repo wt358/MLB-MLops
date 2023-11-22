@@ -459,7 +459,7 @@ def predict_win():
         # df_win = win[cond]
         # print(df_win['winner'].count(),win['winner'].count()-df_win['winner'].count())
 
-        print(win,drop(columns=['real_winner','runs_y_x','runs_p_y_x','runs_y_y','runs_p_y_y']))
+        print(win.drop(columns=['real_winner','runs_y_x','runs_p_y_x','runs_y_y','runs_p_y_y']))
         data=win.to_dict('records')
         db_result=client['predict_result']
         colllection_result=db_result['result']
