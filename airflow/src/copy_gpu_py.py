@@ -165,7 +165,19 @@ def score_model():
                                 .repeat()
     test_dataset = tf.data.Dataset.from_tensor_slices((X_test,y_test)).batch(N_BATCH)
     with tf.device("/gpu:0"):
-        model_att= create_model(15)
+        db_model=client['model']
+        collection_model = db_model['model_att']
+        model_name = 'att'
+        model_fpath = f'{model_name}.joblib'
+        result=collection_model.find({"model_name": model_name}).sort([("inserted_time",-1)])
+        print(result)
+        cnt=len(list(result.clone()))
+        try:
+            file_id = str(result[0]['file_id'])
+            model_att=LoadModel(mongo_id=file_id).clf
+        except Exception as e:
+            model_att= create_model(15)
+            print(e)
         model_att.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=learnig_rate),loss='mse')
 
         print(model_att.summary())
@@ -244,6 +256,19 @@ def loss_model():
 
     
     with tf.device("/gpu:0"):
+        db_model=client['model']
+        collection_model = db_model['model_def']
+        model_name = 'def'
+        model_fpath = f'{model_name}.joblib'
+        result=collection_model.find({"model_name": model_name}).sort([("inserted_time",-1)])
+        print(result)
+        cnt=len(list(result.clone()))
+        try:
+            file_id = str(result[0]['file_id'])
+            model_att=LoadModel(mongo_id=file_id).clf
+        except Exception as e:
+            model_att= create_model(17)
+            print(e)
         print(data_tt_def.columns)
         X_train, X_test, y_train, y_test = train_test_split(data_tt_def,
                                                             np.array(data_cor_def['runs_p_y'].tolist()),test_size=0.25,
@@ -257,8 +282,6 @@ def loss_model():
                                     .repeat()
         test_dataset = tf.data.Dataset.from_tensor_slices((X_test,y_test)).batch(N_BATCH)
 
-
-        model_def= create_model(17)
         model_def.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=learnig_rate),loss='mse')
 
         print(model_def.summary())
