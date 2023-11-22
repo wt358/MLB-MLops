@@ -301,7 +301,8 @@ def loss_model():
 
 def predict_win():
     now=datetime.now()
-    today=str(now)[:10]
+    # today=str(now)[:10]
+    today="2023-10-01"
     match_day=datetime.strptime(today,'%Y-%m-%d')
     host = "mongodb://localhost:27017/"
     client=MongoClient(host)
@@ -434,7 +435,7 @@ def predict_win():
         # df_win = win[cond]
         # print(df_win['winner'].count(),win['winner'].count()-df_win['winner'].count())
 
-        # print(win)
+        print(win)
         data=win.to_dict('records')
         db_result=client['predict_result']
         colllection_result=db_result['result']
