@@ -35,7 +35,8 @@ class LoadModel(metaclass=ModelSingleton):
         print('loading model')
         #host = Variable.get("MONGO_URL_SECRET")
         #    host = os.environ['MONGO_URL_SECRET'] 
-        host = "mongodb://root:coops2022@mongodb-0.mongodb-headless.mongo.svc.cluster.local:27017, mongodb-1.mongodb-headless.mongo.svc.cluster.local:27017"
+        # host = "mongodb://root:coops2022@mongodb-0.mongodb-headless.mongo.svc.cluster.local:27017, mongodb-1.mongodb-headless.mongo.svc.cluster.local:27017"
+        host = "mongodb://114.200.143.112:27017"
         client = MongoClient(host)
 
         db_model = client['model']
@@ -54,7 +55,8 @@ class LoadModel(metaclass=ModelSingleton):
 
 def LoadfromMongo(model_name,collection_name):
     json_data={}
-    host = "mongodb://root:coops2022@mongodb-0.mongodb-headless.mongo.svc.cluster.local:27017, mongodb-1.mongodb-headless.mongo.svc.cluster.local:27017"
+    # host = "mongodb://root:coops2022@mongodb-0.mongodb-headless.mongo.svc.cluster.local:27017, mongodb-1.mongodb-headless.mongo.svc.cluster.local:27017"
+    host = "mongodb://114.200.143.112:27017"
     client=MongoClient(host)
     db_model = client['model']
     collection_model = db_model[collection_name]
@@ -70,7 +72,8 @@ def LoadfromMongo(model_name,collection_name):
 def SaveModel(model,collection_name,model_name,train_dt,loss=None,local=False):
     print('saving model...')
     # host = os.environ['MONGO_URL_SECRET']
-    host = "mongodb://root:coops2022@mongodb-0.mongodb-headless.mongo.svc.cluster.local:27017, mongodb-1.mongodb-headless.mongo.svc.cluster.local:27017"
+    # host = "mongodb://root:coops2022@mongodb-0.mongodb-headless.mongo.svc.cluster.local:27017, mongodb-1.mongodb-headless.mongo.svc.cluster.local:27017"
+    host = "mongodb://114.200.143.112:27017"
     # print(host)
     client=MongoClient(host)
     db_model = client['model']
