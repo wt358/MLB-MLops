@@ -122,7 +122,7 @@ airflow:
 ###################################
 scheduler:
   ## the number of scheduler Pods to run
-  replicas: 3
+  replicas: 2
 
   ## resource requests/limits for the scheduler Pods
   ## [SPEC] https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#resourcerequirements-v1-core
