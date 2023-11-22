@@ -165,6 +165,7 @@ def score_model():
                                 .repeat()
     test_dataset = tf.data.Dataset.from_tensor_slices((X_test,y_test)).batch(N_BATCH)
     with tf.device("/gpu:0"):
+        client=MongoClient(host)
         db_model=client['model']
         collection_model = db_model['model_att']
         model_name = 'att'
@@ -256,6 +257,7 @@ def loss_model():
 
     
     with tf.device("/gpu:0"):
+        client=MongoClient(host)
         db_model=client['model']
         collection_model = db_model['model_def']
         model_name = 'def'
