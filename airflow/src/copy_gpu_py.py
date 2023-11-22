@@ -115,7 +115,7 @@ def score_model():
     col_list=db_att.list_collection_names()
     list_att=[]
 
-    learn_date=datetime.datetime(2023,1,1)
+    learn_date=datetime(2023,1,1)
 
     query={
         "game_date":{
@@ -204,7 +204,7 @@ def score_model():
         # new_model = joblib.load('att1.joblib')
         # defend model learning
         
-        now=datetime.datetime.now()
+        now=datetime.now()
         SaveModel(model_att,f'model_att','att',now)
     print("learning score_model")
 
@@ -215,7 +215,7 @@ def loss_model():
     col_list=db_def.list_collection_names()
     list_def=[]
 
-    learn_date=datetime.datetime(2023,1,1)
+    learn_date=datetime(2023,1,1)
 
     query={
         "game_date":{
@@ -319,7 +319,7 @@ def loss_model():
 
 
 
-        now=datetime.datetime.now()
+        now=datetime.now()
         SaveModel(model_def,f'model_def','def',now)
     print("learning loss model")
 
